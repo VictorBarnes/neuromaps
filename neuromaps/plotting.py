@@ -28,9 +28,10 @@ def plot_surf_template(data, template, density, surf='inflated',
 
     Parameters
     ----------
-    data : str or os.PathLike or tuple-of-str
+    data : np.ndarray or str or os.PathLike or tuple-of-str
         Path to data file(s) to be plotted. If tuple, assumes (left, right)
-        hemisphere.
+        hemisphere. If np.ndarray, left and right hemispheres need to be
+        combined into one array.
     template : {'civet', 'fsaverage', 'fsLR'}
         Template on which `data` is defined
     density : str
@@ -65,13 +66,17 @@ def plot_surf_template(data, template, density, surf='inflated',
     if kwargs.get('bg_map') is not None and kwargs.get('alpha') is None:
         opts['alpha'] = 'auto'
 
-    data, hemispheres = zip(*_check_hemi(data, hemi))
+    if isinstance(data, np.ndarray):
+        data = np.array_split(data, 2)
+        hemispheres = ('L', 'R')
+    else:
+        data, hemispheres = zip(*_check_hemi(data, hemi))
+        data = np.array([load_gifti(img).agg_data().astype('float32') for img in data])
     n_surf = len(data)
     fig, axes = plt.subplots(n_surf, 2, subplot_kw={'projection': '3d'})
     axes = (axes,) if n_surf == 1 else axes.T
     for row, hemi, img in zip(axes, hemispheres, data):
         geom = load_gifti(getattr(surf, hemi)).agg_data()
-        img = load_gifti(img).agg_data().astype('float32')
         # set medial wall to NaN; this will avoid it being plotted
         if mask_medial:
             med = load_gifti(getattr(medial, hemi)).agg_data().astype(bool)
@@ -132,3 +137,4 @@ def _fix_facecolors(ax, facecolors, vertices, faces, view, hemi):
     colors = ax._shade_colors(np.asarray(facecolors), normals, views[view])
 
     return colors
+
