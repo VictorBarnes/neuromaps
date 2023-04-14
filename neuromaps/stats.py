@@ -13,7 +13,8 @@ except ImportError:
     from scipy.stats.stats import _chk2_asarray  # scipy < 1.8.0
 from sklearn.utils.validation import check_random_state
 
-from neuromaps.images import load_data
+from neuromaps.images import load_data, load_gifti
+from neuromaps.datasets import fetch_atlas
 
 
 def compare_images(src, trg, metric='pearsonr', ignore_zero=True, nulls=None,
@@ -64,7 +65,7 @@ def compare_images(src, trg, metric='pearsonr', ignore_zero=True, nulls=None,
         if not callable(metric):
             raise ValueError(f'Invalid `metric`: {metric}')
         else:
-            if not isinstance(metric([1, 1], [1, 1]), float):
+            if not isinstance(metric([1, 0], [0, 1]), float):
                 raise ValueError('Provided callable `metric` must accept two '
                                  'inputs and return single value.')
 
@@ -280,3 +281,4 @@ def efficient_pearsonr(a, b, ddof=1, nan_policy='propagate', return_pval=True):
         return corr, prob
 
     return corr
+
